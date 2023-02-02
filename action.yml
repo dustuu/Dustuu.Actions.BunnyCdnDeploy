@@ -1,0 +1,46 @@
+name: 'BunnyCDN Test'
+description: 'WIP action for deploying to BunnyCDN via the official BunnyCDN .Net SDK'
+branding:
+  icon: upload-cloud
+  color: orange
+inputs:
+  workspace:
+    description: 'The workspace directory.'
+    required: false
+    default: '/github/workspace'
+  directory:
+    description: 'The root directory to upload from (relative to workspace). Example, "path/to/build/artifacts".'
+    required: true
+  api-key:
+    description: 'The API key for the BunnyCDN account which owns the target Storage/Pull Zones'
+    required: true
+  storage-zone-username:
+    description: 'The username of the target Storage Zone. Example, "my-storage-zone".'
+    required: true
+  storage-zone-password:
+    description: 'The password of the target Storage Zone. Can not be the read-only password.'
+    required: true
+  storage-zone-region:
+    description: 'The primary region of the target Storage Zone. Example, "de".'
+    required: true
+  pull-zone-id:
+    description: 'The id of the Pull Zone attached to the target Storage Zone. Example, "123456".'
+    required: true
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+  - '-w'
+  - ${{ inputs.workspace }}
+  - '-d'
+  - ${{ inputs.directory }}
+  - '-a'
+  - ${{ inputs.api-key }}
+  - '-u'
+  - ${{ inputs.storage-zone-username }}
+  - '-p'
+  - ${{ inputs.storage-zone-password }}
+  - '-r'
+  - ${{ inputs.storage-zone-region }}
+  - '-i'
+  - ${{ inputs."pull-zone-id }}
