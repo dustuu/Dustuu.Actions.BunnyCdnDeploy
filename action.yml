@@ -1,4 +1,4 @@
-name: 'BunnyCDN Test'
+name: 'BunnyCDN Deploy'
 description: 'WIP action for deploying to BunnyCDN via the official BunnyCDN .Net SDK'
 branding:
   icon: upload-cloud
