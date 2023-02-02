@@ -43,4 +43,4 @@ runs:
   - '-r'
   - ${{ inputs.storage-zone-region }}
   - '-i'
-  - ${{ inputs."pull-zone-id }}
+  - ${{ inputs.pull-zone-id }}
