@@ -13,15 +13,22 @@ public class ActionInputs
     [Option('a', "api-key", Required = true)]
     public string BunnyCdnApiKey { get; set; } = null!;
 
-    [Option('u', "storage-zone-username", Required = true)]
-    public string StorageZoneUsername { get; set; } = null!;
+    [Option('z', "dns-zone-id", Required = true)]
+    public string DnsZoneId { get; set; } = null!;
 
-    [Option('p', "storage-zone-password", Required = true)]
-    public string StorageZonePassword { get; set; } = null!;
+    [Option('s', "dns-root-subdomain", Required = true)]
+    public string DnsRootSubdomain { get; set; } = null!;
 
-    [Option('r', "storage-zone-region", Required = true)]
-    public string StorageZoneRegion { get; set; } = null!;
+    string _branchName = null!;
 
-    [Option('i', "pull-zone-id", Required = true)]
-    public string PullZoneId { get; set; } = null!;
+    [Option('b', "branch", Required = true)]
+    public string Branch
+    {
+        get => _branchName;
+        set
+        {
+            if (value is { Length: > 0 } )
+            { _branchName = value.Split("/")[^1]; }
+        }
+    }
 }

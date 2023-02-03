@@ -5,12 +5,16 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UserSecretsId>5246b3b9-fe0a-4c94-8a45-a4ac0ae42d95</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BunnyCDN.Net.Storage" Version="1.0.4" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="ApiBodies\" />
   </ItemGroup>
 
 </Project>

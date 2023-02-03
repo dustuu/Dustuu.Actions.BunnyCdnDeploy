@@ -14,17 +14,14 @@ inputs:
   api-key:
     description: 'The API key for the BunnyCDN account which owns the target Storage/Pull Zones'
     required: true
-  storage-zone-username:
-    description: 'The username of the target Storage Zone. Example, "my-storage-zone".'
+  dns-zone-id:
+    description: 'The Id of the target DNS Zone.'
     required: true
-  storage-zone-password:
-    description: 'The password of the target Storage Zone. Can not be the read-only password.'
+  dns-root-subdomain:
+    description: 'The root subdomain for deployment in the target DNS Zone.'
     required: true
-  storage-zone-region:
-    description: 'The primary region of the target Storage Zone. Example, "de".'
-    required: true
-  pull-zone-id:
-    description: 'The id of the Pull Zone attached to the target Storage Zone. Example, "123456".'
+  branch:
+    description: 'The name of the GitHub Branch. Example, "main".'
     required: true
 runs:
   using: 'docker'
@@ -36,11 +33,9 @@ runs:
   - ${{ inputs.directory }}
   - '-a'
   - ${{ inputs.api-key }}
-  - '-u'
-  - ${{ inputs.storage-zone-username }}
-  - '-p'
-  - ${{ inputs.storage-zone-password }}
-  - '-r'
-  - ${{ inputs.storage-zone-region }}
-  - '-i'
-  - ${{ inputs.pull-zone-id }}
+  - '-z'
+  - ${{ inputs.dns-zone-id }}
+  - '-s'
+  - ${{ inputs.dns-root-subdomain }}
+  - '-b'
+  - ${{ inputs.branch }}
