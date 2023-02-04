@@ -4,31 +4,34 @@ namespace Dustuu.Actions.BunnyCdnDeploy;
 
 public class ActionInputs
 {
+    string _branchName = null!;
+
     [Option('w', "workspace", Required = true)]
     public string Workspace { get; set; } = null!;
 
     [Option('d', "directory", Required = true)]
     public string Directory { get; set; } = null!;
 
-    [Option('a', "api-key", Required = true)]
-    public string BunnyCdnApiKey { get; set; } = null!;
-
-    [Option('z', "dns-zone-id", Required = true)]
-    public string DnsZoneId { get; set; } = null!;
-
-    [Option('s', "dns-root-subdomain", Required = true)]
-    public string DnsRootSubdomain { get; set; } = null!;
-
-    string _branchName = null!;
-
-    [Option('b', "branch", Required = true)]
-    public string Branch
+    [Option('c', "branch-current-name", Required = true)]
+    public string BranchCurrentName
     {
         get => _branchName;
         set
         {
-            if (value is { Length: > 0 } )
+            if (value is { Length: > 0 })
             { _branchName = value.Split("/")[^1]; }
         }
     }
+
+    [Option('m', "branch-main-name")]
+    public string BranchMainName { get; set; } = "main";
+
+    [Option('a', "api-key", Required = true)]
+    public string ApiKey { get; set; } = null!;
+
+    [Option('i', "dns-zone-id", Required = true)]
+    public string DnsZoneId { get; set; } = null!;
+
+    [Option('s', "dns-subdomain")]
+    public string DnsSubdomain { get; set; } = string.Empty;
 }

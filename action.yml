@@ -6,23 +6,26 @@ branding:
 inputs:
   workspace:
     description: 'The workspace directory.'
-    required: false
     default: '/github/workspace'
   directory:
     description: 'The root directory to upload from (relative to workspace). Example, "path/to/build/artifacts".'
     required: true
+  branch-current-name:
+    description: 'The name of the current GitHub Branch. Example, "main".'
+    required: true
+  branch-main-name:
+    description: 'The name of the main GitHub Branch. Example, "main".'
+    default: 'main'
   api-key:
-    description: 'The API key for the BunnyCDN account which owns the target Storage/Pull Zones'
+    description: 'The API key for the BunnyCDN account which owns the target DNS Zone'
     required: true
   dns-zone-id:
     description: 'The Id of the target DNS Zone.'
     required: true
-  dns-root-subdomain:
-    description: 'The root subdomain for deployment in the target DNS Zone.'
-    required: true
-  branch:
-    description: 'The name of the GitHub Branch. Example, "main".'
-    required: true
+  dns-subdomain:
+    description: 'The subdomain for deployment in the target DNS Zone. If left blank, deploys to the root domain.'
+    default: ''
+
 runs:
   using: 'docker'
   image: 'Dockerfile'
@@ -31,11 +34,13 @@ runs:
   - ${{ inputs.workspace }}
   - '-d'
   - ${{ inputs.directory }}
+  - '-c'
+  - ${{ inputs.branch-current-name }}
+  - '-m'
+  - ${{ inputs.branch-main-name }}
   - '-a'
   - ${{ inputs.api-key }}
-  - '-z'
+  - '-i'
   - ${{ inputs.dns-zone-id }}
   - '-s'
-  - ${{ inputs.dns-root-subdomain }}
-  - '-b'
-  - ${{ inputs.branch }}
+  - ${{ inputs.dns-subdomain }}
