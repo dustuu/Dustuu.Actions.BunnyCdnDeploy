@@ -15,19 +15,18 @@ internal partial class Program
     private const string BUNNY_CDN_API = "https://api.bunny.net/";
     private const string LOG_CENSOR = "***";
 
-    private static void Log(string message, string[]? toCensor = null)
+    private static void Log(string message, params string[] toCensor)
     {
-        if (toCensor is not null)
-        { foreach (string target in toCensor) { message = message.Replace(target, LOG_CENSOR); } }
+        foreach (string target in toCensor) { message = message.Replace(target, LOG_CENSOR); }
         Console.WriteLine(message);
     }
 
     private static void LogToString
-    (object obj, string[]? toCensor = null, [CallerArgumentExpression(nameof(obj))] string objName = null!) =>
+    (object obj, [CallerArgumentExpression(nameof(obj))] string objName = null!, params string[] toCensor) =>
         Log($"{objName}: {obj}", toCensor);
 
     private static void LogToJson
-    (object obj, string[]? toCensor = null, [CallerArgumentExpression(nameof(obj))] string objName = null!) =>
+    (object obj, [CallerArgumentExpression(nameof(obj))] string objName = null!, params string[] toCensor) =>
         Log($"{objName}: {JsonSerializer.Serialize(obj)}", toCensor);
 
     private static async Task Main(string[] args)
@@ -109,7 +108,7 @@ internal partial class Program
         }
         else { Log("Storage Zone found! Skipping creation."); }
         if (storageZone is null) { throw new Exception("Failed to create storage zone"); }
-        LogToJson(storageZone, new string[] { storageZone.Password });
+        LogToJson(storageZone, toCensor: storageZone.Password);
 
         // Check for a pre-existing Pull Zone with the same name
         Log($"Checking for pre-existing Pull Zone with name '{resourceName}'...");
@@ -142,7 +141,7 @@ internal partial class Program
             Log("Refreshing Storage Zone with created Pull Zone...");
             storageZone = await http.Get<StorageZone>($"storagezone/{storageZone.Id}");
             Log("Refreshed Storage Zone!");
-            LogToJson(storageZone);
+            LogToJson(storageZone, toCensor: storageZone.Password);
 
             // Get Finalized Pull Zone
             Log("Finalized pull zone from refreshed Storage Zone:");
