@@ -4,7 +4,11 @@ namespace Dustuu.Actions.BunnyCdnDeploy;
 
 public class ActionInputs
 {
-    string _branchName = null!;
+    string _branchCurrentName = null!;
+    string _branchMainName = "main";
+
+    private static string CleanBranchName(string branchName) => !string.IsNullOrEmpty(branchName) ?
+        branchName.Split('/')[^1].ToLowerInvariant() : string.Empty;
 
     [Option('w', "workspace", Required = true)]
     public string Workspace { get; set; } = null!;
@@ -15,16 +19,16 @@ public class ActionInputs
     [Option('c', "branch-current-name", Required = true)]
     public string BranchCurrentName
     {
-        get => _branchName;
-        set
-        {
-            if (value is { Length: > 0 })
-            { _branchName = value.Split("/")[^1]; }
-        }
+        get => _branchCurrentName;
+        set => _branchCurrentName = CleanBranchName(value);
     }
 
     [Option('m', "branch-main-name")]
-    public string BranchMainName { get; set; } = "main";
+    public string BranchMainName
+    {
+        get => _branchMainName;
+        set => _branchMainName = CleanBranchName(value);
+    }
 
     [Option('a', "api-key", Required = true)]
     public string ApiKey { get; set; } = null!;
@@ -34,4 +38,7 @@ public class ActionInputs
 
     [Option('s', "dns-subdomain")]
     public string DnsSubdomain { get; set; } = string.Empty;
+
+    [Option('l', "debug-limit")]
+    public int DebugLimit { get; set; }
 }

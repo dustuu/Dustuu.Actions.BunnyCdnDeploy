@@ -1,5 +1,5 @@
 name: 'BunnyCDN Deploy'
-description: 'WIP action for deploying to BunnyCDN via the official BunnyCDN .Net SDK'
+description: 'WIP action for deploying to BunnyCDN/DNS via the official BunnyCDN .Net Storage SDK'
 branding:
   icon: upload-cloud
   color: orange

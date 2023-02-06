@@ -14,5 +14,6 @@ public record PullZone
     {
         public required string Value { get; init; }
         public required bool IsSystemHostname { get; init; }
+        public required bool ForceSSL { get; init; }
     }
 }
