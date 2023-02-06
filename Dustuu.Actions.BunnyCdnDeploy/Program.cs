@@ -15,18 +15,19 @@ internal partial class Program
     private const string BUNNY_CDN_API = "https://api.bunny.net/";
     private const string LOG_CENSOR = "***";
 
-    private static void Log(string message, params string[] toCensor)
+    private static void Log(string message, string[]? toCensor = null)
     {
-        foreach (string target in toCensor) { message = message.Replace(target, LOG_CENSOR); }
+        if (toCensor is not null)
+        { foreach (string target in toCensor) { message = message.Replace(target, LOG_CENSOR); } }
         Console.WriteLine(message);
     }
 
     private static void LogToString
-    (object obj, [CallerArgumentExpression(nameof(obj))] string objName = null!, params string[] toCensor) =>
+    (object obj, string[]? toCensor = null, [CallerArgumentExpression(nameof(obj))] string objName = null!) =>
         Log($"{objName}: {obj}", toCensor);
 
     private static void LogToJson
-    (object obj, [CallerArgumentExpression(nameof(obj))] string objName = null!, params string[] toCensor) =>
+    (object obj, string[]? toCensor = null, [CallerArgumentExpression(nameof(obj))] string objName = null!) =>
         Log($"{objName}: {JsonSerializer.Serialize(obj)}", toCensor);
 
     private static async Task Main(string[] args)
@@ -108,7 +109,7 @@ internal partial class Program
         }
         else { Log("Storage Zone found! Skipping creation."); }
         if (storageZone is null) { throw new Exception("Failed to create storage zone"); }
-        LogToJson(storageZone, toCensor: storageZone.Password);
+        LogToJson(storageZone, new string[] { storageZone.Password });
 
         // Check for a pre-existing Pull Zone with the same name
         Log($"Checking for pre-existing Pull Zone with name '{resourceName}'...");
