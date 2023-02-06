@@ -110,6 +110,20 @@ internal partial class Program
         if (storageZone is null) { throw new Exception("Failed to create storage zone"); }
         LogToJson(storageZone, toCensor: storageZone.Password);
 
+        // Ensure Storage Zone has Rewrite404To200 enabled
+        Log("Checking if Rewrite404To200 is already enabled on Storage Zone...");
+        if (!storageZone.Rewrite404To200)
+        {
+            Log("Enabling Rewrite404To200 on Storage Zone...");
+            await http.PostResponseMessage
+            (
+                $"storagezone/{storageZone.Id}",
+                storageZone with { Rewrite404To200 = true }
+            );
+            Log("Enabled Rewrite404To200 on Storage Zone!");
+        }
+        else { Log("Rewrite404To200 was already enabled on Storage Zone!"); }
+
         // Check for a pre-existing Pull Zone with the same name
         Log($"Checking for pre-existing Pull Zone with name '{resourceName}'...");
         PullZone? pullZone = (await http.Get<PullZone[]>($"pullzone"))

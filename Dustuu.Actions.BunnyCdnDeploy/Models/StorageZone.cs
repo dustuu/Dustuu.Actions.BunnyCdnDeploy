@@ -11,4 +11,5 @@ public record StorageZone
     public required string Password { get; init; }
     public required PullZone[] PullZones { get; set; }
     public required string Region { get; init; }
+    public required bool Rewrite404To200 { get; init; }
 }
