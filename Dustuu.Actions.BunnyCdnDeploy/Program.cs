@@ -127,7 +127,7 @@ internal partial class Program
             await http.PostResponseMessage
             (
                 $"storagezone/{storageZone.Id}",
-                storageZone with { Rewrite404To200 = true }
+                new UpdateStorageZoneRequestBody() { Rewrite404To200 = true }
             );
             Log("Enabled Rewrite404To200 on Storage Zone!");
         }
