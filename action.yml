@@ -10,9 +10,6 @@ inputs:
   directory:
     description: 'The root directory to upload from (relative to workspace). Example, "path/to/build/artifacts".'
     required: true
-  branch-current-name:
-    description: 'The name of the current GitHub Branch. Example, "main".'
-    required: true
   branch-main-name:
     description: 'The name of the main GitHub Branch. Example, "main".'
     default: 'main'
@@ -34,8 +31,6 @@ runs:
   - ${{ inputs.workspace }}
   - '-d'
   - ${{ inputs.directory }}
-  - '-c'
-  - ${{ inputs.branch-current-name }}
   - '-m'
   - ${{ inputs.branch-main-name }}
   - '-a'

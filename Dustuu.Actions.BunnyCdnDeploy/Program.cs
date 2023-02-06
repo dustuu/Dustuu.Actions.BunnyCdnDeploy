@@ -14,6 +14,7 @@ internal partial class Program
 {
     private const string BUNNY_CDN_API = "https://api.bunny.net/";
     private const string LOG_CENSOR = "***";
+    private const string ENV_BRANCH_NAME = "GITHUB_REF_NAME";
 
     private static void Log(string message, params string[] toCensor)
     {
@@ -35,6 +36,14 @@ internal partial class Program
         using CancellationTokenSource tokenSource = new();
         Console.CancelKeyPress += delegate { tokenSource.Cancel(); };
 
+        // Read Environment Variables
+        string? branchName = Environment.GetEnvironmentVariable(ENV_BRANCH_NAME);
+        if (string.IsNullOrEmpty(branchName)) { throw new Exception("Couldn't find branch name!"); }
+        LogToString(branchName);
+        Log("Cleaning Branch Name...");
+        branchName = branchName.Split('/')[^1].ToLowerInvariant();
+        LogToString(branchName);
+
         // Configure Inputs
         ParserResult<ActionInputs> parser = Parser.Default.ParseArguments<ActionInputs>(args);
         if (parser.Errors.ToArray() is { Length: > 0 } errors)
@@ -50,8 +59,8 @@ internal partial class Program
         // If the current branch is not the main branch, add the branch name to the subdomain
         // NOTE: If two branches are sanitized by Regex to be equal, there will be a conflict
         // EXAMPLE: 'my_branch!' and 'my..branch???' will both resolve to 'mybranch' and conflict
-        if (inputs.BranchCurrentName != inputs.BranchMainName)
-        { subdomainPieces.Add(SafeName().Replace(inputs.BranchCurrentName, string.Empty)); }
+        if (branchName != inputs.BranchMainName)
+        { subdomainPieces.Add(SafeName().Replace(branchName, string.Empty)); }
         // If a Dns Subdomain is provided, add it to the subdomain
         subdomainPieces.AddRange(inputs.DnsSubdomain.Split('.'));
         // Finish building the subdomain
@@ -164,6 +173,87 @@ internal partial class Program
         }
         else { Log("Pull Zone found! Skipping creation."); }
 
+        // Get System Host Name
+        Log("Getting System Host Name...");
+        PullZone.HostName systemHostName = pullZone.Hostnames.Single(h => h.IsSystemHostname);
+        LogToJson(systemHostName);
+
+        // Build the new record
+        Log("Building DNS Record...");
+        DnsZone.Record record = new()
+        {
+            Type = DnsZone.Record.TYPE_CNAME,
+            Name = subdomain, //If subdomain is empty, this will be a root record
+            Value = systemHostName.Value,
+            Ttl = 300 // 300 seconds = 5 Minutes
+        };
+        LogToJson(record);
+
+        // Check for a previously existing old record
+        DnsZone.Record? recordOld = dnsZone.Records
+            .Where(r => r.Type == DnsZone.Record.TYPE_CNAME)
+            .SingleOrDefaultEqualsIgnoreCase(r => r.Name, subdomain);
+
+        // Create the record if it doesn't exist
+        if (recordOld is null)
+        {
+            Log("Adding DNS Record...");
+            await http.PutResponseMessage( $"dnszone/{inputs.DnsZoneId}/records", record );
+            Log("Added DNS Record!");
+        }
+        // Otherwise, update the record if needed
+        else
+        {
+            if (recordOld.Value != record.Value)
+            {
+                Log("Updating DNS Record...");
+                await http.PostResponseMessage($"dnszone/{inputs.DnsZoneId}/records/{recordOld.Id}", record);
+                Log("Updated DNS Record!");
+            }
+            else { Log("DNS Records was already up to date!"); }
+        }
+
+        // Add custom hostname to Pull Zone
+        Log($"Checking for existing custom host name: '{deploymentName}'...");
+        PullZone.HostName? hostName =
+            pullZone.Hostnames.SingleOrDefaultEqualsIgnoreCase(h => h.Value, deploymentName);
+        bool needsSsl = hostName is null || !hostName.ForceSSL;
+
+        // Create the custom HostName if needed
+        if (hostName is null)
+        {
+            Log("Creating custom host name...");
+            await http.PostResponseMessage
+            (
+                $"pullzone/{pullZone.Id}/addHostname",
+                new AddHostnameRequestBody() { Hostname = deploymentName }
+            );
+            Log("Custom host name created!");
+        }
+        else
+        {
+            Log("Custom host name already existed! Skipping creation.");
+            LogToJson(hostName);
+        }
+
+        if (needsSsl)
+        {
+            // Load free SSL certificate
+            Log("Loading free SSL certificate...");
+            await http.GetResponseMessage($"pullzone/loadFreeCertificate?hostname={deploymentName}");
+            Log("Loaded free SSL certificate!");
+
+            // Force SSL
+            Log("Setting force SSL to 'true'...");
+            await http.PostResponseMessage
+            (
+                $"pullzone/{pullZone.Id}/setForceSSL",
+                new SetForceSslRequestBody() { Hostname = deploymentName, ForceSSL = true }
+            );
+            Log("Set Force SSL to 'true'!");
+        }
+        else { Log("SSL already configured! skipping configuration."); }
+
         // Create Storage Connection
         BunnyCDNStorage bunnyCDNStorage =
             new(storageZone.Name, storageZone.Password, storageZone.Region);
@@ -226,84 +316,6 @@ internal partial class Program
             Log($"Deleting: {delete.LocalPath}...");
             await bunnyCDNStorage.DeleteObjectAsync(delete.CdnPath);
         }
-
-        // Get System Host Name
-        Log("Getting System Host Name...");
-        PullZone.HostName systemHostName = pullZone.Hostnames.Single(h => h.IsSystemHostname);
-        LogToJson(systemHostName);
-
-        // Build the new record
-        Log("Building DNS Record...");
-        DnsZone.Record record = new()
-        {
-            Type = DnsZone.Record.TYPE_CNAME,
-            Name = subdomain, //If subdomain is empty, this will be a root record
-            Value = systemHostName.Value,
-            Ttl = 300 // 300 seconds = 5 Minutes
-        };
-        LogToJson(record);
-
-        // Check for a previously existing old record
-        DnsZone.Record? recordOld = dnsZone.Records
-            .Where(r => r.Type == DnsZone.Record.TYPE_CNAME)
-            .SingleOrDefaultEqualsIgnoreCase(r => r.Name, subdomain);
-
-        // Create the record if it doesn't exist
-        if (recordOld is null)
-        {
-            Log("Adding DNS Record...");
-            await http.PutResponseMessage( $"dnszone/{inputs.DnsZoneId}/records", record );
-            Log("Added DNS Record!");
-        }
-        // TODO: Only update the record if it actually needs to change
-        // Otherwise, update the record
-        else
-        {
-            Log("Updating DNS Record...");
-            await http.PostResponseMessage( $"dnszone/{inputs.DnsZoneId}/records/{recordOld.Id}", record );
-            Log("Updated DNS Record!");
-        }
-
-        // Add custom hostname to Pull Zone
-        Log($"Checking for existing custom host name: '{deploymentName}'...");
-        PullZone.HostName? hostName =
-            pullZone.Hostnames.SingleOrDefaultEqualsIgnoreCase(h => h.Value, deploymentName);
-        bool needsSsl = hostName is null || !hostName.ForceSSL;
-
-        // Create the custom HostName if needed
-        if (hostName is null)
-        {
-            Log("Creating custom host name...");
-            await http.PostResponseMessage
-            (
-                $"pullzone/{pullZone.Id}/addHostname",
-                new AddHostnameRequestBody() { Hostname = deploymentName }
-            );
-            Log("Custom host name created!");
-        }
-        else
-        {
-            Log("Custom host name already existed! Skipping creation.");
-            LogToJson(hostName);
-        }
-
-        if (needsSsl)
-        {
-            // Load free SSL certificate
-            Log("Loading free SSL certificate...");
-            await http.GetResponseMessage($"pullzone/loadFreeCertificate?hostname={deploymentName}");
-            Log("Loaded free SSL certificate!");
-
-            // Force SSL
-            Log("Setting force SSL to 'true'...");
-            await http.PostResponseMessage
-            (
-                $"pullzone/{pullZone.Id}/setForceSSL",
-                new SetForceSslRequestBody() { Hostname = deploymentName, ForceSSL = true }
-            );
-            Log("Set Force SSL to 'true'!");
-        }
-        else { Log("SSL already configured! skipping configuration."); }
 
         // Purge the Pull Zone Cache
         Log("Purging Pull Zone Cache...");
